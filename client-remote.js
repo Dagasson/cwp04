@@ -5,11 +5,10 @@ const path=require('path');
 
 const client = new net.Socket();
 let adr=[];
-let separator = "\t\v\t\r";
-let stack=[];
+let separator = "||";
 const dec = "DEC";
 const ack = "ACK";
-const fl = "Remote";
+const remote = "Remote";
 const unknown = "UNKNOWN";
 const dir = "Direct";
 const client_name = "Client";
@@ -19,18 +18,16 @@ const accept = "File received";
 client.setEncoding('utf8');
 
 client.connect(port, function() {
-            client.write(fl);
+            client.write(remote);
             console.log('Connected to the server');
 });
 client.on('data', function (data){
 	if(data===ack)
 	{
-		console.log("connection established");
-		
+		console.log("connection established");	
+		client.write("COPY"+separator+"from.txt"+separator+"to.txt");
 	}
-	if (stack.length !== 0) {
-        
-    }
+	
 
 });
 
@@ -63,15 +60,5 @@ function send_file(adr, err){
         }
 	});
     }
-    console.log("stack length:"+stack.length);
 	}
-}
-
-function sendtoserver()
-{
-console.log("send to server");
-	let forsend=stack.pop();
-	client.write(fs.readFileSync(forsend));
-	client.write(separator+path.basename(forsend));
-	client.write(separator+"FIN");
 }

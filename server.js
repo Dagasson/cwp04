@@ -1,11 +1,12 @@
 const path = require('path');
 const net = require('net');
 const fs = require('fs');
+const crypto = require('crypto');
 const port = 8124;
 const saveDirectory = process.env.NODE_PATH;
 const maxConnection = process.env.CONST_MAX_CONNECTION;
 
-const files = "Remote";
+const remote = "Remote";
 const ack = "ACK";
 const dec = "DEC";
 const accept = "File received";
@@ -13,7 +14,7 @@ const accept = "File received";
 let seed = 0;
 let clientModes = [];
 let file = [];
-let separator = "\t\v\t\r";
+let separator = "||";
 
 const server = net.createServer((client) => {
 
@@ -34,11 +35,10 @@ const server = net.createServer((client) => {
     function ClientHandler(data, error) {
         if (!error) {
             console.log("client handler")
-            if (client.id === undefined && (data.toString() === files)) {
+            if (client.id === undefined && (data.toString() === remote)) {
                 client.id = Date.now().toString() + seed++;
                 console.log(`Client ${client.id} connect`);
                 clientModes[client.id] = data.toString();
-                    file[client.id] = [];
                     fs.mkdirSync(saveDirectory + path.sep + client.id);
                 client.write(ack);
             }
@@ -50,12 +50,26 @@ const server = net.createServer((client) => {
     }
     function ClientFilesDialogue(data, error) {
         if (!error) {
-            if (clientModes[client.id] === files && data.toString() !== "FILES") {
-                file[client.id].push(data);
-                if (data.toString().endsWith(separator + "FIN")) {
-                    CreateFile(saveDirectory + path.sep + client.id, client.id);
-                    client.write(accept);
-                }
+            if (clientModes[client.id] === remote && data.toString() !== "remote") {
+				if(data.toString().startsWith("COPY"))
+				{
+					let cop_data=data.toString().split(separator);
+					CreateFile(cop_data[1], saveDirectory+"/"+client.id+"/"+cop_data[2], client);
+				}
+				if(data.toString().startsWith("ENCODE"))
+				{
+					let cop_data=data.toString().split(separator);
+					EncodeFile(cop_data[1], client.id+"/"+cop_data[2], client, key);
+				}
+				if(data.toString().startsWith("DECODE"))
+				{
+					let cop_data=data.toString().split(separator);
+					DecodeFile(cop_data[1], client.id+"/"+cop_data[2], client, key);
+				}
+				
+				
+				
+				
             }
         }
         else {
@@ -69,11 +83,32 @@ server.listen(port, () => {
     console.log(`Server listening on localhost:${port}`);
 });
 
-function CreateFile(saveDir, id) {
+function CreateFile(or_pat, pat, client) {
     console.log("createfile");
-    let buffer = Buffer.concat(file[id]);
-    let separatorIndex = buffer.indexOf(separator);
-    let filename = buffer.slice(separatorIndex).toString().split(separator).filter(Boolean)[0];
-    fs.writeFileSync(saveDir + path.sep + filename, buffer.slice(0, separatorIndex));
-    file[id] = [];
+	let rs= fs.createReadStream(or_pat);
+	let ws= fs.createWriteStream(pat);
+	rs.pipe(ws);
+	ws.on('finish', ()=>{
+	console.log("copying success");
+	});
+}
+
+function EncodeFile(or_pat, pat, client) {
+    console.log("createfile");
+	let rs= fs.createReadStream(or_pat);
+	let ws= fs.createWriteStream(pat);
+	re.pipe(ws);
+	ws.on('finish', ()=>{
+	console.log("copying success");
+	});
+}
+
+function DecodeFile(or_pat, pat, client) {
+    console.log("createfile");
+	let rs= fs.createReadStream(or_pat);
+	let ws= fs.createWriteStream(pat);
+	re.pipe(ws);
+	ws.on('finish', ()=>{
+	console.log("copying success");
+	});
 }
