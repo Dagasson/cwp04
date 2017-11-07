@@ -59,12 +59,12 @@ const server = net.createServer((client) => {
 				if(data.toString().startsWith("ENCODE"))
 				{
 					let cop_data=data.toString().split(separator);
-					EncodeFile(cop_data[1], client.id+"/"+cop_data[2], client, key);
+					EncodeFile(saveDirectory+"/"+client.id+"/"+cop_data[1], saveDirectory+"/"+client.id+"/"+cop_data[2], client, cop_data[3]);
 				}
 				if(data.toString().startsWith("DECODE"))
 				{
 					let cop_data=data.toString().split(separator);
-					DecodeFile(cop_data[1], client.id+"/"+cop_data[2], client, key);
+					DecodeFile(saveDirectory+"/"+client.id+"/"+cop_data[1], saveDirectory+"/"+client.id+"/"+cop_data[2], client, cop_data[3]);
 				}
 				
 				
@@ -84,31 +84,37 @@ server.listen(port, () => {
 });
 
 function CreateFile(or_pat, pat, client) {
-    console.log("createfile");
+    console.log("create file");
 	let rs= fs.createReadStream(or_pat);
 	let ws= fs.createWriteStream(pat);
 	rs.pipe(ws);
 	ws.on('finish', ()=>{
 	console.log("copying success");
+	client.write("copy");
 	});
 }
 
-function EncodeFile(or_pat, pat, client) {
-    console.log("createfile");
+function EncodeFile(or_pat, pat, client, key) {
+    console.log("encode file");
 	let rs= fs.createReadStream(or_pat);
 	let ws= fs.createWriteStream(pat);
-	re.pipe(ws);
+	let cypher = crypto.createCipher("aes-256-ctr", key);
+	console.log("start encoding");
+	rs.pipe(cypher).pipe(ws);
 	ws.on('finish', ()=>{
-	console.log("copying success");
+	console.log("encoding success");
+	client.write("encode");
 	});
 }
 
-function DecodeFile(or_pat, pat, client) {
-    console.log("createfile");
+function DecodeFile(or_pat, pat, client, key) {
+    console.log("decode file");
 	let rs= fs.createReadStream(or_pat);
 	let ws= fs.createWriteStream(pat);
-	re.pipe(ws);
+    let cypher = crypto.createDecipher("aes-256-ctr", key);
+	rs.pipe(cypher).pipe(ws);
 	ws.on('finish', ()=>{
-	console.log("copying success");
+	console.log("decoding success");
+	client.write("decode");
 	});
 }

@@ -27,7 +27,21 @@ client.on('data', function (data){
 		console.log("connection established");	
 		client.write("COPY"+separator+"from.txt"+separator+"to.txt");
 	}
-	
+	if(data==="copy")
+	{
+		console.log('start encoding');
+		client.write("ENCODE"+separator+"to.txt"+separator+"encode.txt"+separator+"kek");
+	}
+	if(data==="encode")
+	{
+		console.log('start encoding');
+		client.write("DECODE"+separator+"encode.txt"+separator+"decode.txt"+separator+"kek");
+	}
+	if(data==="decode")
+	{
+		console.log('finish app');
+		client.end();
+	}
 
 });
 
